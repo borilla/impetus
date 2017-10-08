@@ -26,15 +26,6 @@ export default class Impetus {
          * Initialize instance
          */
         (function init() {
-            sourceEl = (typeof sourceEl === 'string') ? doc.querySelector(sourceEl) : sourceEl;
-            if (!sourceEl) {
-                throw new Error('IMPETUS: source not found.');
-            }
-
-            if (!updateCallback) {
-                throw new Error('IMPETUS: update function not defined.');
-            }
-
             if (initialValues) {
                 if (initialValues[0]) {
                     targetX = initialValues[0];
