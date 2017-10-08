@@ -15,13 +15,11 @@
 
     function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
+    var doc = document;
     var stopThresholdDefault = 0.3;
-    var bounceDeceleration = 0.04;
-    var bounceAcceleration = 0.11;
 
-    // fixes weird safari 10 bug where preventDefault is prevented
-    // @see https://github.com/metafizzy/flickity/issues/457#issuecomment-254501356
-    window.addEventListener('touchmove', function () {});
+    // options to stop chrome from whining about passive scroll handling
+    var eventOptions = isPassiveSupported() ? { passive: false } : false;
 
     var Impetus = function Impetus(_ref) {
         var _ref$source = _ref.source;
@@ -32,14 +30,10 @@
         var _ref$friction = _ref.friction;
         var friction = _ref$friction === undefined ? 0.92 : _ref$friction;
         var initialValues = _ref.initialValues;
-        var boundX = _ref.boundX;
-        var boundY = _ref.boundY;
-        var _ref$bounce = _ref.bounce;
-        var bounce = _ref$bounce === undefined ? true : _ref$bounce;
 
         _classCallCheck(this, Impetus);
 
-        var boundXmin, boundXmax, boundYmin, boundYmax, pointerLastX, pointerLastY, pointerCurrentX, pointerCurrentY, pointerId, decVelX, decVelY;
+        var pointerLastX, pointerLastY, pointerCurrentX, pointerCurrentY, pointerId, decVelX, decVelY;
         var targetX = 0;
         var targetY = 0;
         var stopThreshold = stopThresholdDefault * multiplier;
@@ -53,7 +47,7 @@
          * Initialize instance
          */
         (function init() {
-            sourceEl = typeof sourceEl === 'string' ? document.querySelector(sourceEl) : sourceEl;
+            sourceEl = typeof sourceEl === 'string' ? doc.querySelector(sourceEl) : sourceEl;
             if (!sourceEl) {
                 throw new Error('IMPETUS: source not found.');
             }
@@ -72,23 +66,13 @@
                 callUpdateCallback();
             }
 
-            // Initialize bound values
-            if (boundX) {
-                boundXmin = boundX[0];
-                boundXmax = boundX[1];
-            }
-            if (boundY) {
-                boundYmin = boundY[0];
-                boundYmax = boundY[1];
-            }
-
             sourceEl.addEventListener('touchstart', onDown);
             sourceEl.addEventListener('mousedown', onDown);
         })();
 
         /**
          * In edge cases where you may need to
-         * reinstanciate Impetus on the same sourceEl
+         * reinstantiate Impetus on the same sourceEl
          * this will remove the previous event listeners
          */
         this.destroy = function () {
@@ -96,7 +80,7 @@
             sourceEl.removeEventListener('mousedown', onDown);
             // however it won't "destroy" a reference
             // to instance if you'd like to do that
-            // it returns null as a convinience.
+            // it returns null as a convenience.
             // ex: `instance = instance.destroy();`
             return null;
         };
@@ -141,26 +125,6 @@
         this.setMultiplier = function (val) {
             multiplier = val;
             stopThreshold = stopThresholdDefault * multiplier;
-        };
-
-        /**
-         * Update boundX value
-         * @public
-         * @param {Number[]} boundX
-         */
-        this.setBoundX = function (boundX) {
-            boundXmin = boundX[0];
-            boundXmax = boundX[1];
-        };
-
-        /**
-         * Update boundY value
-         * @public
-         * @param {Number[]} boundY
-         */
-        this.setBoundY = function (boundY) {
-            boundYmin = boundY[0];
-            boundYmax = boundY[1];
         };
 
         /**
@@ -209,12 +173,12 @@
                 trackingPoints = [];
                 addTrackingPoint(pointerLastX, pointerLastY);
 
-                // @see https://developers.google.com/web/updates/2017/01/scrolling-intervention
-                document.addEventListener('touchmove', onMove, getPassiveSupported() ? { passive: false } : false);
-                document.addEventListener('touchend', onUp);
-                document.addEventListener('touchcancel', stopTracking);
-                document.addEventListener('mousemove', onMove, getPassiveSupported() ? { passive: false } : false);
-                document.addEventListener('mouseup', onUp);
+                var addDocumentEvent = doc.addEventListener;
+                addDocumentEvent('touchmove', onMove, eventOptions);
+                addDocumentEvent('touchend', onUp);
+                addDocumentEvent('touchcancel', stopTracking);
+                addDocumentEvent('mousemove', onMove, eventOptions);
+                addDocumentEvent('mouseup', onUp);
             }
         }
 
@@ -254,11 +218,12 @@
             addTrackingPoint(pointerLastX, pointerLastY);
             startDecelAnim();
 
-            document.removeEventListener('touchmove', onMove);
-            document.removeEventListener('touchend', onUp);
-            document.removeEventListener('touchcancel', stopTracking);
-            document.removeEventListener('mouseup', onUp);
-            document.removeEventListener('mousemove', onMove);
+            var removeDocumentEvent = doc.removeEventListener;
+            removeDocumentEvent('touchmove', onMove);
+            removeDocumentEvent('touchend', onUp);
+            removeDocumentEvent('touchcancel', stopTracking);
+            removeDocumentEvent('mouseup', onUp);
+            removeDocumentEvent('mousemove', onMove);
         }
 
         /**
@@ -288,18 +253,6 @@
             targetX += pointerChangeX * multiplier;
             targetY += pointerChangeY * multiplier;
 
-            if (bounce) {
-                var diff = checkBounds();
-                if (diff.x !== 0) {
-                    targetX -= pointerChangeX * dragOutOfBoundsMultiplier(diff.x) * multiplier;
-                }
-                if (diff.y !== 0) {
-                    targetY -= pointerChangeY * dragOutOfBoundsMultiplier(diff.y) * multiplier;
-                }
-            } else {
-                checkBounds(true);
-            }
-
             callUpdateCallback();
 
             pointerLastX = pointerCurrentX;
@@ -308,57 +261,13 @@
         }
 
         /**
-         * Returns a value from around 0.5 to 1, based on distance
-         * @param {Number} val
-         */
-        function dragOutOfBoundsMultiplier(val) {
-            return 0.000005 * Math.pow(val, 2) + 0.0001 * val + 0.55;
-        }
-
-        /**
          * prevents animating faster than current framerate
          */
         function requestTick() {
             if (!ticking) {
-                requestAnimFrame(updateAndRender);
+                requestAnimationFrame(updateAndRender);
             }
             ticking = true;
-        }
-
-        /**
-         * Determine position relative to bounds
-         * @param {Boolean} restrict Whether to restrict target to bounds
-         */
-        function checkBounds(restrict) {
-            var xDiff = 0;
-            var yDiff = 0;
-
-            if (boundXmin !== undefined && targetX < boundXmin) {
-                xDiff = boundXmin - targetX;
-            } else if (boundXmax !== undefined && targetX > boundXmax) {
-                xDiff = boundXmax - targetX;
-            }
-
-            if (boundYmin !== undefined && targetY < boundYmin) {
-                yDiff = boundYmin - targetY;
-            } else if (boundYmax !== undefined && targetY > boundYmax) {
-                yDiff = boundYmax - targetY;
-            }
-
-            if (restrict) {
-                if (xDiff !== 0) {
-                    targetX = xDiff > 0 ? boundXmin : boundXmax;
-                }
-                if (yDiff !== 0) {
-                    targetY = yDiff > 0 ? boundYmin : boundYmax;
-                }
-            }
-
-            return {
-                x: xDiff,
-                y: yDiff,
-                inBounds: xDiff === 0 && yDiff === 0
-            };
         }
 
         /**
@@ -377,11 +286,9 @@
             decVelX = xOffset / D || 0; // prevent NaN
             decVelY = yOffset / D || 0;
 
-            var diff = checkBounds();
-
-            if (Math.abs(decVelX) > 1 || Math.abs(decVelY) > 1 || !diff.inBounds) {
+            if (Math.abs(decVelX) > 1 || Math.abs(decVelY) > 1) {
                 decelerating = true;
-                requestAnimFrame(stepDecelAnim);
+                requestAnimationFrame(stepDecelAnim);
             }
         }
 
@@ -399,85 +306,35 @@
             targetX += decVelX;
             targetY += decVelY;
 
-            var diff = checkBounds();
-
-            if (Math.abs(decVelX) > stopThreshold || Math.abs(decVelY) > stopThreshold || !diff.inBounds) {
-
-                if (bounce) {
-                    var reboundAdjust = 2.5;
-
-                    if (diff.x !== 0) {
-                        if (diff.x * decVelX <= 0) {
-                            decVelX += diff.x * bounceDeceleration;
-                        } else {
-                            var adjust = diff.x > 0 ? reboundAdjust : -reboundAdjust;
-                            decVelX = (diff.x + adjust) * bounceAcceleration;
-                        }
-                    }
-                    if (diff.y !== 0) {
-                        if (diff.y * decVelY <= 0) {
-                            decVelY += diff.y * bounceDeceleration;
-                        } else {
-                            var adjust = diff.y > 0 ? reboundAdjust : -reboundAdjust;
-                            decVelY = (diff.y + adjust) * bounceAcceleration;
-                        }
-                    }
-                } else {
-                    if (diff.x !== 0) {
-                        if (diff.x > 0) {
-                            targetX = boundXmin;
-                        } else {
-                            targetX = boundXmax;
-                        }
-                        decVelX = 0;
-                    }
-                    if (diff.y !== 0) {
-                        if (diff.y > 0) {
-                            targetY = boundYmin;
-                        } else {
-                            targetY = boundYmax;
-                        }
-                        decVelY = 0;
-                    }
-                }
-
+            if (Math.abs(decVelX) > stopThreshold || Math.abs(decVelY) > stopThreshold) {
                 callUpdateCallback();
-
-                requestAnimFrame(stepDecelAnim);
+                requestAnimationFrame(stepDecelAnim);
             } else {
                 decelerating = false;
             }
         }
-    }
-
-    /**
-     * @see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
-     */
-    ;
+    };
 
     module.exports = Impetus;
-    var requestAnimFrame = (function () {
-        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function (callback) {
-            window.setTimeout(callback, 1000 / 60);
-        };
-    })();
 
-    function getPassiveSupported() {
-        var passiveSupported = false;
+    function isPassiveSupported() {
+        var _isPassiveSupported = false;
 
         try {
-            var options = Object.defineProperty({}, "passive", {
+            var _name = 'touchmove';
+            var options = Object.defineProperty({}, 'passive', {
                 get: function get() {
-                    passiveSupported = true;
+                    _isPassiveSupported = true;
                 }
             });
+            var noop = function noop() {};
 
-            window.addEventListener("test", null, options);
+            // fixes weird safari 10 bug where preventDefault is prevented
+            // @see https://github.com/metafizzy/flickity/issues/457#issuecomment-254501356
+            addEventListener(_name, noop, options);
+            // removeEventListener(name, noop, options);
         } catch (err) {}
 
-        getPassiveSupported = function () {
-            return passiveSupported;
-        };
-        return passiveSupported;
+        return _isPassiveSupported;
     }
 });

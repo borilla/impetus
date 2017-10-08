@@ -1,9 +1,5 @@
-const win = window;
 const doc = document;
-
 const stopThresholdDefault = 0.3;
-const bounceDeceleration = 0.04;
-const bounceAcceleration = 0.11;
 
 // options to stop chrome from whining about passive scroll handling
 const eventOptions = isPassiveSupported() ? {passive: false} : false;
@@ -14,12 +10,9 @@ export default class Impetus {
         update: updateCallback,
         multiplier = 1,
         friction = 0.92,
-        initialValues,
-        boundX,
-        boundY,
-        bounce = true
+        initialValues
     }) {
-        var boundXmin, boundXmax, boundYmin, boundYmax, pointerLastX, pointerLastY, pointerCurrentX, pointerCurrentY, pointerId, decVelX, decVelY;
+        var pointerLastX, pointerLastY, pointerCurrentX, pointerCurrentY, pointerId, decVelX, decVelY;
         var targetX = 0;
         var targetY = 0;
         var stopThreshold = stopThresholdDefault * multiplier;
@@ -28,7 +21,6 @@ export default class Impetus {
         var paused = false;
         var decelerating = false;
         var trackingPoints = [];
-
 
         /**
          * Initialize instance
@@ -51,16 +43,6 @@ export default class Impetus {
                     targetY = initialValues[1];
                 }
                 callUpdateCallback();
-            }
-
-            // Initialize bound values
-            if (boundX) {
-                boundXmin = boundX[0];
-                boundXmax = boundX[1];
-            }
-            if (boundY) {
-                boundYmin = boundY[0];
-                boundYmax = boundY[1];
             }
 
             sourceEl.addEventListener('touchstart', onDown);
@@ -122,26 +104,6 @@ export default class Impetus {
         this.setMultiplier = function(val) {
             multiplier = val;
             stopThreshold = stopThresholdDefault * multiplier;
-        };
-
-        /**
-         * Update boundX value
-         * @public
-         * @param {Number[]} boundX
-         */
-        this.setBoundX = function(boundX) {
-            boundXmin = boundX[0];
-            boundXmax = boundX[1];
-        };
-
-        /**
-         * Update boundY value
-         * @public
-         * @param {Number[]} boundY
-         */
-        this.setBoundY = function(boundY) {
-            boundYmin = boundY[0];
-            boundYmax = boundY[1];
         };
 
         /**
@@ -269,18 +231,6 @@ export default class Impetus {
             targetX += pointerChangeX * multiplier;
             targetY += pointerChangeY * multiplier;
 
-            if (bounce) {
-                let diff = checkBounds();
-                if (diff.x !== 0) {
-                    targetX -= pointerChangeX * dragOutOfBoundsMultiplier(diff.x) * multiplier;
-                }
-                if (diff.y !== 0) {
-                    targetY -= pointerChangeY * dragOutOfBoundsMultiplier(diff.y) * multiplier;
-                }
-            } else {
-                checkBounds(true);
-            }
-
             callUpdateCallback();
 
             pointerLastX = pointerCurrentX;
@@ -288,63 +238,15 @@ export default class Impetus {
             ticking = false;
         }
 
-
-        /**
-         * Returns a value from around 0.5 to 1, based on distance
-         * @param {Number} val
-         */
-        function dragOutOfBoundsMultiplier(val) {
-            return 0.000005 * Math.pow(val, 2) + 0.0001 * val + 0.55;
-        }
-
-
         /**
          * prevents animating faster than current framerate
          */
         function requestTick() {
             if (!ticking) {
-                requestAnimFrame(updateAndRender);
+                requestAnimationFrame(updateAndRender);
             }
             ticking = true;
         }
-
-
-        /**
-         * Determine position relative to bounds
-         * @param {Boolean} restrict Whether to restrict target to bounds
-         */
-        function checkBounds(restrict) {
-            var xDiff = 0;
-            var yDiff = 0;
-
-            if (boundXmin !== undefined && targetX < boundXmin) {
-                xDiff = boundXmin - targetX;
-            } else if (boundXmax !== undefined && targetX > boundXmax) {
-                xDiff = boundXmax - targetX;
-            }
-
-            if (boundYmin !== undefined && targetY < boundYmin) {
-                yDiff = boundYmin - targetY;
-            } else if (boundYmax !== undefined && targetY > boundYmax) {
-                yDiff = boundYmax - targetY;
-            }
-
-            if (restrict) {
-                if (xDiff !== 0) {
-                    targetX = (xDiff > 0) ? boundXmin : boundXmax;
-                }
-                if (yDiff !== 0) {
-                    targetY = (yDiff > 0) ? boundYmin : boundYmax;
-                }
-            }
-
-            return {
-                x: xDiff,
-                y: yDiff,
-                inBounds: xDiff === 0 && yDiff === 0
-            };
-        }
-
 
         /**
          * Initialize animation of values coming to a stop
@@ -362,14 +264,11 @@ export default class Impetus {
             decVelX = (xOffset / D) || 0; // prevent NaN
             decVelY = (yOffset / D) || 0;
 
-            var diff = checkBounds();
-
-            if ((Math.abs(decVelX) > 1 || Math.abs(decVelY) > 1) || !diff.inBounds){
+            if ((Math.abs(decVelX) > 1 || Math.abs(decVelY) > 1)){
                 decelerating = true;
-                requestAnimFrame(stepDecelAnim);
+                requestAnimationFrame(stepDecelAnim);
             }
         }
-
 
         /**
          * Animates values slowing down
@@ -385,84 +284,14 @@ export default class Impetus {
             targetX += decVelX;
             targetY += decVelY;
 
-            var diff = checkBounds();
-
-            if ((Math.abs(decVelX) > stopThreshold || Math.abs(decVelY) > stopThreshold) || !diff.inBounds) {
-
-                if (bounce) {
-                    let reboundAdjust = 2.5;
-
-                    if (diff.x !== 0) {
-                        if (diff.x * decVelX <= 0) {
-                            decVelX += diff.x * bounceDeceleration;
-                        } else {
-                            let adjust = (diff.x > 0) ? reboundAdjust : -reboundAdjust;
-                            decVelX = (diff.x + adjust) * bounceAcceleration;
-                        }
-                    }
-                    if (diff.y !== 0) {
-                        if (diff.y * decVelY <= 0) {
-                            decVelY += diff.y * bounceDeceleration;
-                        } else {
-                            let adjust = (diff.y > 0) ? reboundAdjust : -reboundAdjust;
-                            decVelY = (diff.y + adjust) * bounceAcceleration;
-                        }
-                    }
-                } else {
-                    if (diff.x !== 0) {
-                        if (diff.x > 0) {
-                            targetX = boundXmin;
-                        } else {
-                            targetX = boundXmax;
-                        }
-                        decVelX = 0;
-                    }
-                    if (diff.y !== 0) {
-                        if (diff.y > 0) {
-                            targetY = boundYmin;
-                        } else {
-                            targetY = boundYmax;
-                        }
-                        decVelY = 0;
-                    }
-                }
-
+            if ((Math.abs(decVelX) > stopThreshold || Math.abs(decVelY) > stopThreshold)) {
                 callUpdateCallback();
-
-                requestAnimFrame(stepDecelAnim);
+                requestAnimationFrame(stepDecelAnim);
             } else {
                 decelerating = false;
             }
         }
     }
-}
-
-
-
-/**
- * @see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
- */
-const requestAnimFrame = (function(){
-    return win.requestAnimationFrame || win.webkitRequestAnimationFrame || win.mozRequestAnimationFrame || function(callback) {
-        win.setTimeout(callback, 1000 / 60);
-    };
-})();
-
-function getPassiveSupported() {
-    let passiveSupported = false;
-
-    try {
-        var options = Object.defineProperty({}, "passive", {
-            get: function() {
-                passiveSupported = true;
-            }
-        });
-
-        addEventListener("test", null, options);
-    } catch(err) {}
-
-    getPassiveSupported = () => passiveSupported;
-    return passiveSupported;
 }
 
 function isPassiveSupported() {
