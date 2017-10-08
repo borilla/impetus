@@ -204,7 +204,7 @@
 
 	var dotImpetus = new Impetus({
 		source: dotEl,
-		initialValues: [dotParent.offsetWidth/2 - 25],
+		initialX: dotParent.offsetWidth / 2 - 25,
 		update: function(x) {
 			this.style.left = x + 'px';
 		}

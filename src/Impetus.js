@@ -10,7 +10,7 @@ export default class Impetus {
         update: updateCallback,
         multiplier = 1,
         friction = 0.92,
-        initialValues
+        initialX
     }) {
         var pointerLastX, pointerCurrentX, pointerId, decVelX;
         var targetX = 0;
@@ -27,10 +27,8 @@ export default class Impetus {
         (function init() {
             sourceEl = (typeof sourceEl === 'string') ? doc.querySelector(sourceEl) : sourceEl;
 
-            if (initialValues) {
-                if (initialValues[0]) {
-                    targetX = initialValues[0];
-                }
+            if (initialX) {
+                targetX = initialX;
                 callUpdateCallback();
             }
 
