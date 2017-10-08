@@ -12,9 +12,8 @@ export default class Impetus {
         friction = 0.92,
         initialValues
     }) {
-        var pointerLastX, pointerLastY, pointerCurrentX, pointerCurrentY, pointerId, decVelX, decVelY;
+        var pointerLastX, pointerCurrentX, pointerId, decVelX;
         var targetX = 0;
-        var targetY = 0;
         var stopThreshold = stopThresholdDefault * multiplier;
         var ticking = false;
         var pointerActive = false;
@@ -26,12 +25,11 @@ export default class Impetus {
          * Initialize instance
          */
         (function init() {
+            sourceEl = (typeof sourceEl === 'string') ? doc.querySelector(sourceEl) : sourceEl;
+
             if (initialValues) {
                 if (initialValues[0]) {
                     targetX = initialValues[0];
-                }
-                if (initialValues[1]) {
-                    targetY = initialValues[1];
                 }
                 callUpdateCallback();
             }
@@ -73,17 +71,13 @@ export default class Impetus {
         };
 
         /**
-         * Update the current x and y values
+         * Update the current x value
          * @public
          * @param {Number} x
-         * @param {Number} y
          */
-        this.setValues = function(x, y) {
+        this.setValue = function(x) {
             if (typeof x === 'number') {
                 targetX = x;
-            }
-            if (typeof y === 'number') {
-                targetY = y;
             }
         };
 
@@ -101,7 +95,7 @@ export default class Impetus {
          * Executes the update function
          */
         function callUpdateCallback() {
-            updateCallback.call(sourceEl, targetX, targetY);
+            updateCallback.call(sourceEl, targetX);
         }
 
         /**
@@ -138,9 +132,8 @@ export default class Impetus {
                 pointerId = event.id;
 
                 pointerLastX = pointerCurrentX = event.x;
-                pointerLastY = pointerCurrentY = event.y;
                 trackingPoints = [];
-                addTrackingPoint(pointerLastX, pointerLastY);
+                addTrackingPoint(pointerLastX);
 
                 const addDocumentEvent = doc.addEventListener;
                 addDocumentEvent('touchmove', onMove, eventOptionsPassive);
@@ -160,8 +153,7 @@ export default class Impetus {
 
             if (pointerActive && event.id === pointerId) {
                 pointerCurrentX = event.x;
-                pointerCurrentY = event.y;
-                addTrackingPoint(pointerLastX, pointerLastY);
+                addTrackingPoint(pointerLastX);
                 requestTick();
             }
         }
@@ -183,7 +175,7 @@ export default class Impetus {
          */
         function stopTracking() {
             pointerActive = false;
-            addTrackingPoint(pointerLastX, pointerLastY);
+            addTrackingPoint(pointerLastX);
             startDecelAnim();
 
             const removeDocumentEvent = doc.removeEventListener;
@@ -216,15 +208,12 @@ export default class Impetus {
          */
         function updateAndRender() {
             var pointerChangeX = pointerCurrentX - pointerLastX;
-            var pointerChangeY = pointerCurrentY - pointerLastY;
 
             targetX += pointerChangeX * multiplier;
-            targetY += pointerChangeY * multiplier;
 
             callUpdateCallback();
 
             pointerLastX = pointerCurrentX;
-            pointerLastY = pointerCurrentY;
             ticking = false;
         }
 
@@ -246,15 +235,13 @@ export default class Impetus {
             var lastPoint = trackingPoints[trackingPoints.length - 1];
 
             var xOffset = lastPoint.x - firstPoint.x;
-            var yOffset = lastPoint.y - firstPoint.y;
             var timeOffset = lastPoint.time - firstPoint.time;
 
             var D = (timeOffset / 15) / multiplier;
 
             decVelX = (xOffset / D) || 0; // prevent NaN
-            decVelY = (yOffset / D) || 0;
 
-            if ((Math.abs(decVelX) > 1 || Math.abs(decVelY) > 1)){
+            if (Math.abs(decVelX) > 1) {
                 decelerating = true;
                 requestAnimationFrame(stepDecelAnim);
             }
@@ -269,12 +256,9 @@ export default class Impetus {
             }
 
             decVelX *= friction;
-            decVelY *= friction;
-
             targetX += decVelX;
-            targetY += decVelY;
 
-            if ((Math.abs(decVelX) > stopThreshold || Math.abs(decVelY) > stopThreshold)) {
+            if (Math.abs(decVelX) > stopThreshold) {
                 callUpdateCallback();
                 requestAnimationFrame(stepDecelAnim);
             } else {

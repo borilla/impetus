@@ -92,7 +92,7 @@
 		background-color: #FFF;
 		border: 2px solid #222;
 		z-index: 1;
-		touch-action: none;
+		touch-action: pan-y;
 	}
 	.demo-perspective {
 	    height: 100%;
@@ -111,7 +111,7 @@
 		margin: -20px 0 0 -75px;
 		top: 110px;
 		left: 50%;
-		touch-action: none;
+		touch-action: pan-y;
 	}
 	.cube > div {
 		position: absolute;
@@ -197,7 +197,7 @@
 		</div>
 	</footer>
 
-	<script src="impetus.min.js"></script>
+	<script src="../dist/impetus.js"></script>
 	<script>
 	var dotEl = document.getElementById('Dot');
 	var dotParent = dotEl.offsetParent;
@@ -217,7 +217,7 @@
 		source: '#Cube',
 		multiplier: 0.7,
 		update: function(x, y) {
-			this.style.transform = this.style.webkitTransform = 'translateZ(-120px) rotateY('+x+'deg) rotateX('+(-y)+'deg)';
+			this.style.transform = this.style.webkitTransform = 'translateZ(-120px) rotateY('+x+'deg)';
 		}
 	});
 	</script>
