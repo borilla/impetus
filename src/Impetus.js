@@ -74,9 +74,7 @@ export default class Impetus {
          * @param {Number} x
          */
         this.setValue = function(x) {
-            if (typeof x === 'number') {
-                targetX = x;
-            }
+            targetX = x;
         };
 
         /**
@@ -120,7 +118,7 @@ export default class Impetus {
 
         /**
          * Initializes movement tracking
-         * @param  {Object} ev Normalized event
+         * @param  {Object} ev event (not yet normalized)
          */
         function onDown(ev) {
             var event = normalizeEvent(ev);
@@ -187,9 +185,8 @@ export default class Impetus {
         /**
          * Records movement for the last 100ms
          * @param {number} x
-         * @param {number} y [description]
          */
-        function addTrackingPoint(x, y) {
+        function addTrackingPoint(x) {
             var time = Date.now();
             while (trackingPoints.length > 0) {
                 if (time - trackingPoints[0].time <= 100) {
@@ -198,7 +195,7 @@ export default class Impetus {
                 trackingPoints.shift();
             }
 
-            trackingPoints.push({x, y, time});
+            trackingPoints.push({x, time});
         }
 
         /**
