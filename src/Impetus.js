@@ -1,13 +1,12 @@
+const win = window;
+const doc = document;
 
 const stopThresholdDefault = 0.3;
 const bounceDeceleration = 0.04;
 const bounceAcceleration = 0.11;
 
-
-// fixes weird safari 10 bug where preventDefault is prevented
-// @see https://github.com/metafizzy/flickity/issues/457#issuecomment-254501356
-window.addEventListener('touchmove', function() {});
-
+// options to stop chrome from whining about passive scroll handling
+const eventOptions = isPassiveSupported() ? {passive: false} : false;
 
 export default class Impetus {
     constructor({
@@ -35,7 +34,7 @@ export default class Impetus {
          * Initialize instance
          */
         (function init() {
-            sourceEl = (typeof sourceEl === 'string') ? document.querySelector(sourceEl) : sourceEl;
+            sourceEl = (typeof sourceEl === 'string') ? doc.querySelector(sourceEl) : sourceEl;
             if (!sourceEl) {
                 throw new Error('IMPETUS: source not found.');
             }
@@ -70,7 +69,7 @@ export default class Impetus {
 
         /**
          * In edge cases where you may need to
-         * reinstanciate Impetus on the same sourceEl
+         * reinstantiate Impetus on the same sourceEl
          * this will remove the previous event listeners
          */
         this.destroy = function() {
@@ -78,7 +77,7 @@ export default class Impetus {
             sourceEl.removeEventListener('mousedown', onDown);
             // however it won't "destroy" a reference
             // to instance if you'd like to do that
-            // it returns null as a convinience.
+            // it returns null as a convenience.
             // ex: `instance = instance.destroy();`
             return null;
         };
@@ -190,12 +189,12 @@ export default class Impetus {
                 trackingPoints = [];
                 addTrackingPoint(pointerLastX, pointerLastY);
 
-                // @see https://developers.google.com/web/updates/2017/01/scrolling-intervention
-                document.addEventListener('touchmove', onMove, getPassiveSupported() ? {passive: false} : false);
-                document.addEventListener('touchend', onUp);
-                document.addEventListener('touchcancel', stopTracking);
-                document.addEventListener('mousemove', onMove, getPassiveSupported() ? {passive: false} : false);
-                document.addEventListener('mouseup', onUp);
+                const addDocumentEvent = doc.addEventListener;
+                addDocumentEvent('touchmove', onMove, eventOptions);
+                addDocumentEvent('touchend', onUp);
+                addDocumentEvent('touchcancel', stopTracking);
+                addDocumentEvent('mousemove', onMove, eventOptions);
+                addDocumentEvent('mouseup', onUp);
             }
         }
 
@@ -235,11 +234,12 @@ export default class Impetus {
             addTrackingPoint(pointerLastX, pointerLastY);
             startDecelAnim();
 
-            document.removeEventListener('touchmove', onMove);
-            document.removeEventListener('touchend', onUp);
-            document.removeEventListener('touchcancel', stopTracking);
-            document.removeEventListener('mouseup', onUp);
-            document.removeEventListener('mousemove', onMove);
+            const removeDocumentEvent = doc.removeEventListener;
+            removeDocumentEvent('touchmove', onMove);
+            removeDocumentEvent('touchend', onUp);
+            removeDocumentEvent('touchcancel', stopTracking);
+            removeDocumentEvent('mouseup', onUp);
+            removeDocumentEvent('mousemove', onMove);
         }
 
         /**
@@ -443,11 +443,10 @@ export default class Impetus {
  * @see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
  */
 const requestAnimFrame = (function(){
-    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function(callback) {
-        window.setTimeout(callback, 1000 / 60);
+    return win.requestAnimationFrame || win.webkitRequestAnimationFrame || win.mozRequestAnimationFrame || function(callback) {
+        win.setTimeout(callback, 1000 / 60);
     };
 })();
-
 
 function getPassiveSupported() {
     let passiveSupported = false;
@@ -459,9 +458,28 @@ function getPassiveSupported() {
             }
         });
 
-        window.addEventListener("test", null, options);
+        addEventListener("test", null, options);
     } catch(err) {}
 
     getPassiveSupported = () => passiveSupported;
     return passiveSupported;
+}
+
+function isPassiveSupported() {
+    let _isPassiveSupported = false;
+
+    try {
+        const name = 'touchmove';
+        const options = Object.defineProperty({}, 'passive', {
+            get: () => { _isPassiveSupported = true; }
+        });
+        const noop = () => {};
+
+        // fixes weird safari 10 bug where preventDefault is prevented
+        // @see https://github.com/metafizzy/flickity/issues/457#issuecomment-254501356
+        addEventListener(name, noop, options);
+        // removeEventListener(name, noop, options);
+    } catch (err) {}
+
+    return _isPassiveSupported;
 }
