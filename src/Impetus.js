@@ -73,7 +73,7 @@ export default class Impetus {
          * @public
          * @param {Number} x
          */
-        this.setValue = function(x) {
+        this.setX = function(x) {
             targetX = x;
         };
 

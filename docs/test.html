@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Bumpitus - bumpy scrolling</title>
+	<style>
+		body {
+			background-color: #111;
+			color: #eee;
+			font-family: sans-serif;
+			margin: 0;
+		}
+
+		.container {
+			height: 300px;
+			margin: 40px 0;
+			overflow: hidden;
+			width: 100%;
+		}
+
+		.inner {
+			background: url(./image.jpg) repeat-x;
+			background-position: -50%;
+			background-size: 33.33333% 100%;
+			height: 300px;
+			transform: translateX(-33%);
+			width: 300%;
+		}
+	</style>
+</head>
+<body>
+	<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam porta maximus leo porttitor varius. Quisque massa ipsum, facilisis sed condimentum ut, tincidunt vitae sapien. Sed tincidunt lacinia erat eget volutpat. Morbi efficitur semper velit sit amet consectetur. Duis maximus tortor a nunc lacinia hendrerit. Maecenas semper velit vitae augue aliquet, eu vestibulum dui volutpat. Maecenas lectus neque, vulputate eu dapibus a, ornare a est. Nullam quis sapien massa. Sed eros risus, molestie pulvinar egestas ut, iaculis non neque. Integer id ante quis lacus viverra dictum vel sit amet erat.</p>
+	</div>
+	<div class="container">
+		<div class="inner">
+		</div>
+	</div>
+	<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam porta maximus leo porttitor varius. Quisque massa ipsum, facilisis sed condimentum ut, tincidunt vitae sapien. Sed tincidunt lacinia erat eget volutpat. Morbi efficitur semper velit sit amet consectetur. Duis maximus tortor a nunc lacinia hendrerit. Maecenas semper velit vitae augue aliquet, eu vestibulum dui volutpat. Maecenas lectus neque, vulputate eu dapibus a, ornare a est. Nullam quis sapien massa. Sed eros risus, molestie pulvinar egestas ut, iaculis non neque. Integer id ante quis lacus viverra dictum vel sit amet erat.</p>
+	<p>Mauris ornare, est eu rhoncus volutpat, metus mauris vestibulum dolor, ac tincidunt turpis ante id sapien. Nam nec justo feugiat, ornare nibh et, faucibus risus. Aenean congue diam et nulla egestas dignissim. Integer varius odio et felis pharetra, consectetur placerat tortor luctus. Proin lacinia sed nunc eu finibus. Etiam quis congue nibh, id elementum est. Nam dignissim fermentum risus, a tincidunt odio tristique ac. Duis ullamcorper sapien nec lacus luctus tristique. Proin ut est purus.</p>
+	<p>Praesent ultricies luctus mi, eget accumsan velit. Etiam eleifend tellus sit amet risus laoreet porttitor. Pellentesque auctor, purus eget rhoncus convallis, nisl neque condimentum dolor, sed auctor tortor arcu vitae nisi. Integer rutrum cursus lacus et faucibus. Cras fringilla turpis interdum, sagittis erat sed, varius quam. Curabitur in massa semper, porta mauris vel, condimentum lorem. Pellentesque pellentesque porttitor nisi, sit amet dignissim erat sollicitudin aliquet. Nunc ornare ornare malesuada. Vestibulum vel metus ac ligula elementum semper. Nulla cursus ac leo a varius. Proin vel orci eget lectus gravida elementum quis at nunc.</p>
+
+	<script src="../dist/impetus.js"></script>
+	<script>
+		const container = document.querySelector('.container');
+		const containerWidth = container.offsetWidth;
+		const inner = container.querySelector('.inner');
+		const impetus = new Impetus({
+			source: container,
+			update: function(x) {
+					const newX = x % containerWidth;
+
+					console.log(newX);
+					inner.style.transform = 'translateX(' + (newX - containerWidth) + 'px)';
+
+					if (newX !== x) {
+						impetus.setX(newX);
+					}
+				}
+		});
+	</script>
+</body>
+</html>
