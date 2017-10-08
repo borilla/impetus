@@ -18,8 +18,8 @@
     var doc = document;
     var stopThresholdDefault = 0.3;
 
-    // options to stop chrome from whining about passive scroll handling
-    var eventOptions = isPassiveSupported() ? { passive: false } : false;
+    // options to send to `addEventListener` to make event passive (ie can't use `preventDefault`)
+    var eventOptionsPassive = isPassiveSupported() ? { passive: true } : false;
 
     var Impetus = function Impetus(_ref) {
         var _ref$source = _ref.source;
@@ -66,7 +66,7 @@
                 callUpdateCallback();
             }
 
-            sourceEl.addEventListener('touchstart', onDown);
+            sourceEl.addEventListener('touchstart', onDown, eventOptionsPassive);
             sourceEl.addEventListener('mousedown', onDown);
         })();
 
@@ -174,10 +174,10 @@
                 addTrackingPoint(pointerLastX, pointerLastY);
 
                 var addDocumentEvent = doc.addEventListener;
-                addDocumentEvent('touchmove', onMove, eventOptions);
+                addDocumentEvent('touchmove', onMove, eventOptionsPassive);
                 addDocumentEvent('touchend', onUp);
                 addDocumentEvent('touchcancel', stopTracking);
-                addDocumentEvent('mousemove', onMove, eventOptions);
+                addDocumentEvent('mousemove', onMove, eventOptionsPassive);
                 addDocumentEvent('mouseup', onUp);
             }
         }
@@ -187,7 +187,6 @@
          * @param  {Object} ev Normalized event
          */
         function onMove(ev) {
-            ev.preventDefault();
             var event = normalizeEvent(ev);
 
             if (pointerActive && event.id === pointerId) {
@@ -321,18 +320,16 @@
         var _isPassiveSupported = false;
 
         try {
-            var _name = 'touchmove';
+            var _name = 'test';
+            var noop = function noop() {};
             var options = Object.defineProperty({}, 'passive', {
                 get: function get() {
                     _isPassiveSupported = true;
                 }
             });
-            var noop = function noop() {};
 
-            // fixes weird safari 10 bug where preventDefault is prevented
-            // @see https://github.com/metafizzy/flickity/issues/457#issuecomment-254501356
             addEventListener(_name, noop, options);
-            // removeEventListener(name, noop, options);
+            removeEventListener(_name, noop, options);
         } catch (err) {}
 
         return _isPassiveSupported;
