@@ -10,10 +10,9 @@ export default class Impetus {
         update: updateCallback,
         multiplier = 1,
         friction = 0.92,
-        initialX
+        positionX = 0
     }) {
         var pointerLastX, pointerCurrentX, pointerId, decVelX;
-        var targetX = 0;
         var stopThreshold = stopThresholdDefault * multiplier;
         var ticking = false;
         var pointerActive = false;
@@ -27,8 +26,7 @@ export default class Impetus {
         (function init() {
             sourceEl = (typeof sourceEl === 'string') ? doc.querySelector(sourceEl) : sourceEl;
 
-            if (initialX) {
-                targetX = initialX;
+            if (positionX !== 0) {
                 callUpdateCallback();
             }
 
@@ -74,7 +72,7 @@ export default class Impetus {
          * @param {Number} x
          */
         this.setX = function(x) {
-            targetX = x;
+            positionX = x;
         };
 
         /**
@@ -91,7 +89,7 @@ export default class Impetus {
          * Executes the update function
          */
         function callUpdateCallback() {
-            updateCallback.call(sourceEl, targetX);
+            updateCallback.call(sourceEl, positionX);
         }
 
         /**
@@ -204,7 +202,7 @@ export default class Impetus {
         function updateAndRender() {
             var pointerChangeX = pointerCurrentX - pointerLastX;
 
-            targetX += pointerChangeX * multiplier;
+            positionX += pointerChangeX * multiplier;
 
             callUpdateCallback();
 
@@ -251,7 +249,7 @@ export default class Impetus {
             }
 
             decVelX *= friction;
-            targetX += decVelX;
+            positionX += decVelX;
 
             if (Math.abs(decVelX) > stopThreshold) {
                 callUpdateCallback();
