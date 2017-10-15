@@ -12,7 +12,7 @@ export default class Impetus {
         friction = 0.92,
         positionX = 0
     }) {
-        var pointerLastX, pointerCurrentX, pointerId, decVelX;
+        var pointerLastX, pointerCurrentX, pointerId, velocityX;
         var stopThreshold = stopThresholdDefault * multiplier;
         var ticking = false;
         var pointerActive = false;
@@ -232,9 +232,9 @@ export default class Impetus {
 
             var D = (timeOffset / 15) / multiplier;
 
-            decVelX = (xOffset / D) || 0; // prevent NaN
+            velocityX = (xOffset / D) || 0; // prevent NaN
 
-            if (Math.abs(decVelX) > 1) {
+            if (Math.abs(velocityX) > 1) {
                 decelerating = true;
                 requestAnimationFrame(stepDecelAnim);
             }
@@ -248,10 +248,10 @@ export default class Impetus {
                 return;
             }
 
-            decVelX *= friction;
-            positionX += decVelX;
+            velocityX *= friction;
+            positionX += velocityX;
 
-            if (Math.abs(decVelX) > stopThreshold) {
+            if (Math.abs(velocityX) > stopThreshold) {
                 callUpdateCallback();
                 requestAnimationFrame(stepDecelAnim);
             } else {
