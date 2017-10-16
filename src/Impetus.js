@@ -1,5 +1,4 @@
 const doc = document;
-const stopThresholdDefault = 0.3;
 
 // options to send to `addEventListener` to make event passive (ie can't use `preventDefault`)
 const eventOptionsPassive = isPassiveSupported() ? {passive: true} : false;
@@ -10,10 +9,10 @@ export default class Impetus {
         update: updateCallback,
         multiplier = 1,
         friction = 0.92,
-        positionX = 0
+        positionX = 0,
+        width,
     }) {
         var pointerLastX, pointerCurrentX, pointerId, velocityX;
-        var stopThreshold = stopThresholdDefault * multiplier;
         var ticking = false;
         var pointerActive = false;
         var paused = false;
@@ -82,7 +81,6 @@ export default class Impetus {
          */
         this.setMultiplier = function(val) {
             multiplier = val;
-            stopThreshold = stopThresholdDefault * multiplier;
         };
 
         /**
@@ -234,28 +232,74 @@ export default class Impetus {
 
             velocityX = (xOffset / D) || 0; // prevent NaN
 
-            if (Math.abs(velocityX) > 1) {
-                decelerating = true;
-                requestAnimationFrame(stepDecelAnim);
+            decelerating = true;
+            requestAnimationFrame(stepDecelAnim);
+        }
+
+        /**
+         * Consider effect of two closest attractors to given position
+         */
+        function considerAttractors(position, velocity) {
+            const VELOCITY_THRESHOLD = 20; // pixels per frame
+            const DISTANCE_THRESHOLD = 20; // pixels
+            const ATTRACTOR_RADIUS = width * 0.3; // pixels
+
+            // going too fast to consider attractors?
+            if (velocity > width) {
+                velocityX *= friction;
+                return;
             }
+
+            // approximate mid-position for animation step
+            const midPosition = position + velocity / 2;
+
+            // positions of previous and next attractors
+            const attractor0 = Math.floor(midPosition / width) * width;
+            const attractor1 = attractor0 + width;
+
+            // distances to previous and next attractors
+            const distance0 = midPosition - attractor0;
+            const distance1 = width - distance0;
+
+            // are we close enough to an attractor and going slowly enough?
+            if (velocity < VELOCITY_THRESHOLD) {
+                if (distance0 < DISTANCE_THRESHOLD) {
+                    decelerating = false;
+                    velocityX = 0;
+                    positionX = attractor0;
+                    return;
+                }
+
+                if (distance1 < DISTANCE_THRESHOLD) {
+                    decelerating = false;
+                    velocityX = 0;
+                    positionX = attractor1;
+                    return;
+                }
+            }
+
+            const limitedDistance0 = Math.max(distance0, ATTRACTOR_RADIUS) / width;
+            const limitedDistance1 = Math.max(distance1, ATTRACTOR_RADIUS) / width;
+
+            const acceleration0 = 1 / (limitedDistance0 * limitedDistance0);
+            const acceleration1 = 1 / (limitedDistance1 * limitedDistance1);
+
+            velocityX += (acceleration1 - acceleration0) * 0.3;
+            velocityX *= friction;
+            positionX += velocityX;
         }
 
         /**
          * Animates values slowing down
          */
         function stepDecelAnim() {
-            if (!decelerating) {
-                return;
-            }
+            considerAttractors(positionX, velocityX);
 
-            velocityX *= friction;
-            positionX += velocityX;
-
-            if (Math.abs(velocityX) > stopThreshold) {
+            if (decelerating) {
                 callUpdateCallback();
                 requestAnimationFrame(stepDecelAnim);
             } else {
-                decelerating = false;
+                callUpdateCallback();
             }
         }
     }

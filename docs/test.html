@@ -48,15 +48,15 @@
 		const impetus = new Impetus({
 			source: container,
 			update: function(x) {
-					const newX = x % containerWidth;
+				const newX = x % containerWidth;
 
-					console.log(newX);
-					inner.style.transform = 'translateX(' + (newX - containerWidth) + 'px)';
+				inner.style.transform = 'translateX(' + (newX - containerWidth) + 'px)';
 
-					if (newX !== x) {
-						impetus.setX(newX);
-					}
+				if (newX !== x) {
+					impetus.setX(newX);
 				}
+			},
+			width: containerWidth
 		});
 	</script>
 </body>
