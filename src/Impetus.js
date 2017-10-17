@@ -316,7 +316,7 @@ function isPassiveSupported() {
         });
 
         addEventListener(name, noop, options);
-        removeEventListener(name, noop, options);
+        removeEventListener(name, noop);
     } catch (err) {}
 
     return _isPassiveSupported;
