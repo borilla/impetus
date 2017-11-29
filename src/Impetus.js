@@ -8,7 +8,6 @@ export default class Impetus {
         source: sourceEl = document,
         update: updateCallback,
         multiplier = 1,
-        friction = 0.95,
         positionX = 0,
         width,
     }) {
@@ -237,8 +236,10 @@ export default class Impetus {
          * Consider effect of two closest attractors to given position
          */
         function considerAttractors(position, velocity) {
-            const VELOCITY_THRESHOLD = 30; // pixels per frame
-            const DISTANCE_THRESHOLD = 10; // pixels
+            const ACCELERATION = 4;
+            const FRICTION_FACTOR = 0.95; // factor by which velocity reduces each animation step
+            const VELOCITY_THRESHOLD = 0.05 * width;
+            const DISTANCE_THRESHOLD = VELOCITY_THRESHOLD;
 
             // approximate mid-position for animation step
             const midPosition = position + velocity / 2;
@@ -251,26 +252,25 @@ export default class Impetus {
             const distance0 = midPosition - attractor0;
             const distance1 = width - distance0;
 
-            // are we close enough to an attractor and going slowly enough?
-            if (Math.abs(velocity) < VELOCITY_THRESHOLD) {
-                if (distance0 < DISTANCE_THRESHOLD) {
-                    velocityX = 0;
-                    positionX = attractor0;
-                    callUpdateCallback();
-                    return;
-                }
-
-                if (distance1 < DISTANCE_THRESHOLD) {
-                    velocityX = 0;
-                    positionX = attractor1;
-                    callUpdateCallback();
-                    return;
-                }
-            }
-
-            velocityX += (distance0 - distance1) / width * 4;
-            velocityX *= friction;
+            // calculate new velocity and position
+            velocityX += (distance0 - distance1) / width * ACCELERATION;
+            velocityX *= FRICTION_FACTOR;
             positionX += velocityX;
+
+            // are we close enough to an attractor and going slowly enough?
+            if (velocity > -VELOCITY_THRESHOLD && positionX < attractor0 + DISTANCE_THRESHOLD) {
+                velocityX = 0;
+                positionX = attractor0;
+                callUpdateCallback();
+                return;
+            }
+            // else
+            if (velocity < VELOCITY_THRESHOLD && positionX > attractor1 - DISTANCE_THRESHOLD) {
+                velocityX = 0;
+                positionX = attractor1;
+                callUpdateCallback();
+                return;
+            }
 
             callUpdateCallback();
             requestAnimationFrame(stepDecelAnim);
