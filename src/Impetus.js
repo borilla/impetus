@@ -237,15 +237,8 @@ export default class Impetus {
          * Consider effect of two closest attractors to given position
          */
         function considerAttractors(position, velocity) {
-            const VELOCITY_THRESHOLD = 20; // pixels per frame
+            const VELOCITY_THRESHOLD = 30; // pixels per frame
             const DISTANCE_THRESHOLD = 10; // pixels
-            const ATTRACTOR_RADIUS = width * 0.4; // pixels
-
-            // going too fast to consider attractors?
-            if (velocity > width) {
-                velocityX *= friction;
-                return;
-            }
 
             // approximate mid-position for animation step
             const midPosition = position + velocity / 2;
@@ -275,13 +268,7 @@ export default class Impetus {
                 }
             }
 
-            const limitedDistance0 = Math.max(distance0, ATTRACTOR_RADIUS) / width;
-            const limitedDistance1 = Math.max(distance1, ATTRACTOR_RADIUS) / width;
-
-            const acceleration0 = 1 / (limitedDistance0 * limitedDistance0);
-            const acceleration1 = 1 / (limitedDistance1 * limitedDistance1);
-
-            velocityX += (acceleration1 - acceleration0) * 0.2;
+            velocityX += (distance0 - distance1) / width * 4;
             velocityX *= friction;
             positionX += velocityX;
 
