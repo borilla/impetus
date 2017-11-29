@@ -1,14 +1,14 @@
 const doc = document;
 
 // options to send to `addEventListener` to make event passive (ie can't use `preventDefault`)
-const eventOptionsPassive = isPassiveSupported() ? {passive: true} : false;
+const eventOptionsPassive = isPassiveSupported() ? { passive: true } : false;
 
 export default class Impetus {
     constructor({
         source: sourceEl = document,
         update: updateCallback,
         multiplier = 1,
-        friction = 0.92,
+        friction = 0.95,
         positionX = 0,
         width,
     }) {
@@ -16,7 +16,6 @@ export default class Impetus {
         var ticking = false;
         var pointerActive = false;
         var paused = false;
-        var decelerating = false;
         var trackingPoints = [];
 
         /**
@@ -120,7 +119,6 @@ export default class Impetus {
             var event = normalizeEvent(ev);
             if (!pointerActive && !paused) {
                 pointerActive = true;
-                decelerating = false;
                 pointerId = event.id;
 
                 pointerLastX = pointerCurrentX = event.x;
@@ -232,7 +230,6 @@ export default class Impetus {
 
             velocityX = (xOffset / D) || 0; // prevent NaN
 
-            decelerating = true;
             requestAnimationFrame(stepDecelAnim);
         }
 
@@ -241,8 +238,8 @@ export default class Impetus {
          */
         function considerAttractors(position, velocity) {
             const VELOCITY_THRESHOLD = 20; // pixels per frame
-            const DISTANCE_THRESHOLD = 20; // pixels
-            const ATTRACTOR_RADIUS = width * 0.3; // pixels
+            const DISTANCE_THRESHOLD = 10; // pixels
+            const ATTRACTOR_RADIUS = width * 0.4; // pixels
 
             // going too fast to consider attractors?
             if (velocity > width) {
@@ -262,18 +259,18 @@ export default class Impetus {
             const distance1 = width - distance0;
 
             // are we close enough to an attractor and going slowly enough?
-            if (velocity < VELOCITY_THRESHOLD) {
+            if (Math.abs(velocity) < VELOCITY_THRESHOLD) {
                 if (distance0 < DISTANCE_THRESHOLD) {
-                    decelerating = false;
                     velocityX = 0;
                     positionX = attractor0;
+                    callUpdateCallback();
                     return;
                 }
 
                 if (distance1 < DISTANCE_THRESHOLD) {
-                    decelerating = false;
                     velocityX = 0;
                     positionX = attractor1;
+                    callUpdateCallback();
                     return;
                 }
             }
@@ -284,9 +281,12 @@ export default class Impetus {
             const acceleration0 = 1 / (limitedDistance0 * limitedDistance0);
             const acceleration1 = 1 / (limitedDistance1 * limitedDistance1);
 
-            velocityX += (acceleration1 - acceleration0) * 0.3;
+            velocityX += (acceleration1 - acceleration0) * 0.2;
             velocityX *= friction;
             positionX += velocityX;
+
+            callUpdateCallback();
+            requestAnimationFrame(stepDecelAnim);
         }
 
         /**
@@ -294,13 +294,6 @@ export default class Impetus {
          */
         function stepDecelAnim() {
             considerAttractors(positionX, velocityX);
-
-            if (decelerating) {
-                callUpdateCallback();
-                requestAnimationFrame(stepDecelAnim);
-            } else {
-                callUpdateCallback();
-            }
         }
     }
 }
