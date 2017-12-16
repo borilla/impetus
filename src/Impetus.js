@@ -1,3 +1,5 @@
+import isPassiveSupported from "./is-passive-supported";
+
 const doc = document;
 
 // options to send to `addEventListener` to make event passive (ie can't use `preventDefault`)
@@ -283,21 +285,4 @@ export default class Impetus {
 			considerAttractors(positionX, velocityX);
 		}
 	}
-}
-
-function isPassiveSupported() {
-	let _isPassiveSupported = false;
-
-	try {
-		const name = 'test';
-		const noop = () => {};
-		const options = Object.defineProperty({}, 'passive', {
-			get: () => { _isPassiveSupported = true; }
-		});
-
-		addEventListener(name, noop, options);
-		removeEventListener(name, noop);
-	} catch (err) {}
-
-	return _isPassiveSupported;
 }
