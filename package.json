@@ -1,6 +1,6 @@
 {
   "name": "bumpitus",
-  "version": "0.8.11",
+  "version": "0.8.13",
   "main": "dist/impetus.js",
   "description": "Modified version of Impetus with plugable deceleration calculation",
   "scripts": {

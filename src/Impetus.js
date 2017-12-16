@@ -16,7 +16,6 @@ export default class Impetus {
 		var pointerLastX, pointerCurrentX, pointerId, velocityX;
 		var ticking = false;
 		var pointerActive = false;
-		var paused = false;
 		var trackingPoints = [];
 
 		/**
@@ -46,23 +45,6 @@ export default class Impetus {
 			// it returns null as a convenience.
 			// ex: `instance = instance.destroy();`
 			return null;
-		};
-
-		/**
-		 * Disable movement processing
-		 * @public
-		 */
-		this.pause = function() {
-			pointerActive = false;
-			paused = true;
-		};
-
-		/**
-		 * Enable movement processing
-		 * @public
-		 */
-		this.resume = function() {
-			paused = false;
 		};
 
 		/**
@@ -118,7 +100,7 @@ export default class Impetus {
 		 */
 		function onDown(ev) {
 			var event = normalizeEvent(ev);
-			if (!pointerActive && !paused) {
+			if (!pointerActive) {
 				pointerActive = true;
 				pointerId = event.id;
 
