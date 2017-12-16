@@ -2,6 +2,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import babel from 'rollup-plugin-babel';
 import uglify from 'rollup-plugin-uglify';
+import { list as babelHelpersList } from 'babel-helpers';
 
 const babelOptions = {
 	exclude: 'node_modules/**',
@@ -10,6 +11,7 @@ const babelOptions = {
 		[ 'es2015', { 'modules': false } ],
 	],
 	babelrc: false,
+	externalHelpersWhitelist: babelHelpersList.filter(helperName => helperName !== 'asyncGenerator'),
 };
 
 const uglifyOptions = {
