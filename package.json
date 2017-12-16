@@ -1,8 +1,13 @@
 {
   "name": "bumpitus",
-  "version": "0.8.13",
-  "main": "dist/impetus.js",
+  "author": "Borilla",
+  "version": "0.8.14",
+  "license": "MIT",
   "description": "Modified version of Impetus with plugable deceleration calculation",
+  "main": "dist/impetus.js",
+  "files": [
+    "dist/impetus.js"
+  ],
   "scripts": {
     "build": "npm test && npm run build-dist",
     "build-dist": "rollup -c",
@@ -18,8 +23,6 @@
     "momentum",
     "touch"
   ],
-  "author": "Borilla",
-  "license": "MIT",
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-es2015": "^6.24.1",

@@ -1,16 +1,16 @@
 {
-    "rules": {
-        "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
-        "newline-after-var": ["off"],
-        "newline-before-return": ["off"],
-        "no-else-return": ["off"],
-        "no-empty": ["error", { "allowEmptyCatch": true }],
-        "no-func-assign": ["off"],
-        "no-shadow": ["off"],
-        "object-curly-spacing": ["off", "never"],
-        "prefer-const": ["off"],
-        "quotes": ["off"],
-        "space-before-function-paren": ["off"],
-        "vars-on-top": ["off"]
-    }
+	"rules": {
+		"brace-style": ["error", "1tbs", { "allowSingleLine": true }],
+		"newline-after-var": ["off"],
+		"newline-before-return": ["off"],
+		"no-else-return": ["off"],
+		"no-empty": ["error", { "allowEmptyCatch": true }],
+		"no-func-assign": ["off"],
+		"no-shadow": ["off"],
+		"object-curly-spacing": ["off", "never"],
+		"prefer-const": ["off"],
+		"quotes": ["off"],
+		"space-before-function-paren": ["off"],
+		"vars-on-top": ["off"]
+	}
 }
